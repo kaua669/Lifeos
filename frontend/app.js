@@ -6,9 +6,7 @@
 // ─── CONFIG ───────────────────────────────────────
 // In production, change to your deployed backend URL
 // e.g. 'https://lifeos-api.onrender.com/api'
-const API_BASE = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'
-  ? 'http://localhost:3001/api'
-  : '/api'; // same-origin when deployed on same server
+const API_BASE = 'https://lifeos-backend-yw2p.onrender.com/api';
 
 // ─── PWA SERVICE WORKER ───────────────────────────
 if ('serviceWorker' in navigator) {
