@@ -1,0 +1,225 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+  <meta name="theme-color" content="#22d3ee" />
+  <meta name="description" content="Gerencie sua vida inteira em um só lugar — cronograma, estudos, academia e finanças." />
+
+  <!-- PWA / iOS -->
+  <meta name="mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <meta name="apple-mobile-web-app-title" content="LifeOS" />
+  <link rel="apple-touch-icon" href="icons/icon-192.png" />
+
+  <title>LifeOS — Seu Sistema de Vida</title>
+
+  <link rel="manifest" href="manifest.json" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;1,9..40,300&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="styles.css" />
+
+  <!-- Chart.js -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js" defer></script>
+  <!-- SheetJS -->
+  <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js" defer></script>
+</head>
+<body>
+
+<!-- ═══════════════════════════ AUTH SCREEN ═══════════════════════════ -->
+<div id="auth-screen" class="auth-screen">
+  <div class="auth-bg">
+    <div class="auth-orb auth-orb-1"></div>
+    <div class="auth-orb auth-orb-2"></div>
+    <div class="auth-orb auth-orb-3"></div>
+  </div>
+  <div class="auth-card">
+    <div class="auth-logo">
+      <span class="logo-icon">⬡</span>
+      <span class="logo-text">LifeOS</span>
+    </div>
+    <p class="auth-tagline">Gerencie sua vida inteira em um só lugar</p>
+
+    <!-- Login Form -->
+    <div id="login-form" class="auth-form active">
+      <h2>Entrar</h2>
+      <div class="field-group">
+        <label>E-mail</label>
+        <input type="email" id="login-email" placeholder="seu@email.com" autocomplete="email" inputmode="email" />
+      </div>
+      <div class="field-group">
+        <label>Senha</label>
+        <div class="password-wrap">
+          <input type="password" id="login-password" placeholder="••••••••" autocomplete="current-password" />
+          <button type="button" class="toggle-pw" onclick="togglePw('login-password',this)" aria-label="Mostrar senha">👁</button>
+        </div>
+      </div>
+      <div id="login-error" class="form-error hidden"></div>
+      <button class="btn-primary" onclick="handleLogin()" id="btn-login">Entrar</button>
+      <p class="auth-switch">Não tem conta? <a href="#" onclick="switchAuth('register')">Cadastrar-se</a></p>
+    </div>
+
+    <!-- Register Form -->
+    <div id="register-form" class="auth-form">
+      <h2>Criar Conta</h2>
+      <div class="field-group">
+        <label>Nome completo</label>
+        <input type="text" id="reg-name" placeholder="Seu nome" autocomplete="name" />
+      </div>
+      <div class="field-group">
+        <label>E-mail</label>
+        <input type="email" id="reg-email" placeholder="seu@email.com" autocomplete="email" inputmode="email" />
+      </div>
+      <div class="field-group">
+        <label>Senha</label>
+        <div class="password-wrap">
+          <input type="password" id="reg-password" placeholder="Mínimo 8 caracteres" autocomplete="new-password" />
+          <button type="button" class="toggle-pw" onclick="togglePw('reg-password',this)" aria-label="Mostrar senha">👁</button>
+        </div>
+      </div>
+      <div class="field-group">
+        <label>Confirmar Senha</label>
+        <input type="password" id="reg-confirm" placeholder="Repita a senha" autocomplete="new-password" />
+      </div>
+      <div id="reg-error" class="form-error hidden"></div>
+      <button class="btn-primary" onclick="handleRegister()" id="btn-register">Criar Conta</button>
+      <p class="auth-switch">Já tem conta? <a href="#" onclick="switchAuth('login')">Entrar</a></p>
+    </div>
+  </div>
+
+  <!-- PWA Install Banner -->
+  <div id="pwa-banner" class="pwa-banner hidden">
+    <div class="pwa-banner-content">
+      <span class="logo-icon" style="font-size:20px">⬡</span>
+      <div>
+        <div style="font-size:13px;font-weight:600">Instalar LifeOS</div>
+        <div style="font-size:11px;color:var(--text-2)">Adicione à tela inicial</div>
+      </div>
+    </div>
+    <div style="display:flex;gap:8px">
+      <button class="btn btn-accent btn-sm" id="pwa-install-btn" style="font-size:12px;padding:6px 14px">Instalar</button>
+      <button class="btn btn-outline btn-sm" onclick="document.getElementById('pwa-banner').classList.add('hidden')" style="font-size:12px;padding:6px 10px">✕</button>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════ MAIN APP ═══════════════════════════ -->
+<div id="app" class="app hidden">
+
+  <!-- SIDEBAR -->
+  <aside id="sidebar" class="sidebar" role="navigation" aria-label="Menu principal">
+    <div class="sidebar-header">
+      <div class="sidebar-logo">
+        <span class="logo-icon">⬡</span>
+        <span class="logo-text">LifeOS</span>
+      </div>
+      <button class="sidebar-close" onclick="toggleSidebar()" aria-label="Fechar menu">✕</button>
+    </div>
+
+    <div class="sidebar-user">
+      <div class="user-avatar-sm" id="sidebar-avatar" onclick="navigateTo('profile')" role="button" tabindex="0">
+        <img id="sidebar-avatar-img" src="" alt="" style="display:none" />
+        <span id="sidebar-avatar-letter">U</span>
+      </div>
+      <div class="user-info">
+        <span id="sidebar-name">Usuário</span>
+        <span id="sidebar-email-display" class="user-email-small">email@exemplo.com</span>
+      </div>
+    </div>
+
+    <nav class="sidebar-nav">
+      <a href="#" class="nav-item active" data-page="dashboard" onclick="navigateTo('dashboard')">
+        <span class="nav-icon">◈</span><span>Dashboard</span>
+      </a>
+      <a href="#" class="nav-item" data-page="schedule" onclick="navigateTo('schedule')">
+        <span class="nav-icon">◷</span><span>Cronograma</span>
+      </a>
+      <a href="#" class="nav-item" data-page="study" onclick="navigateTo('study')">
+        <span class="nav-icon">◎</span><span>Estudos</span>
+      </a>
+      <a href="#" class="nav-item" data-page="gym" onclick="navigateTo('gym')">
+        <span class="nav-icon">◉</span><span>Academia</span>
+      </a>
+      <a href="#" class="nav-item" data-page="finance" onclick="navigateTo('finance')">
+        <span class="nav-icon">◆</span><span>Finanças</span>
+      </a>
+      <a href="#" class="nav-item" data-page="profile" onclick="navigateTo('profile')">
+        <span class="nav-icon">◇</span><span>Perfil</span>
+      </a>
+    </nav>
+
+    <div class="sidebar-footer">
+      <button class="btn-logout" onclick="handleLogout()">⏻ Sair</button>
+    </div>
+  </aside>
+
+  <!-- OVERLAY -->
+  <div id="sidebar-overlay" class="sidebar-overlay" onclick="toggleSidebar()" aria-hidden="true"></div>
+
+  <!-- MAIN CONTENT -->
+  <main class="main-content" role="main">
+    <header class="top-bar">
+      <button class="hamburger" onclick="toggleSidebar()" aria-label="Abrir menu" aria-expanded="false" id="hamburger-btn">☰</button>
+      <h1 id="page-title" class="page-title">Dashboard</h1>
+      <div class="top-bar-right">
+        <div class="user-avatar-xs" id="topbar-avatar" onclick="navigateTo('profile')" role="button" tabindex="0" aria-label="Perfil">
+          <img id="topbar-avatar-img" src="" alt="" style="display:none" />
+          <span id="topbar-avatar-letter">U</span>
+        </div>
+      </div>
+    </header>
+
+    <!-- Loading spinner -->
+    <div id="page-loader" class="page-loader hidden">
+      <div class="spinner"></div>
+    </div>
+
+    <div id="page-content" class="page-content">
+      <!-- Pages are injected here by app.js -->
+    </div>
+  </main>
+
+  <!-- BOTTOM NAV (mobile only) -->
+  <nav class="bottom-nav" id="bottom-nav" aria-label="Navegação rápida">
+    <a href="#" class="bottom-nav-item active" data-page="dashboard" onclick="navigateTo('dashboard');return false">
+      <span class="bottom-nav-icon">◈</span>
+      <span>Home</span>
+    </a>
+    <a href="#" class="bottom-nav-item" data-page="schedule" onclick="navigateTo('schedule');return false">
+      <span class="bottom-nav-icon">◷</span>
+      <span>Agenda</span>
+    </a>
+    <a href="#" class="bottom-nav-item" data-page="study" onclick="navigateTo('study');return false">
+      <span class="bottom-nav-icon">◎</span>
+      <span>Estudos</span>
+    </a>
+    <a href="#" class="bottom-nav-item" data-page="gym" onclick="navigateTo('gym');return false">
+      <span class="bottom-nav-icon">◉</span>
+      <span>Academia</span>
+    </a>
+    <a href="#" class="bottom-nav-item" data-page="finance" onclick="navigateTo('finance');return false">
+      <span class="bottom-nav-icon">◆</span>
+      <span>Finanças</span>
+    </a>
+  </nav>
+</div>
+
+<!-- ═══════════════════════════ MODAL ═══════════════════════════ -->
+<div id="modal-overlay" class="modal-overlay hidden" onclick="closeModal()" role="dialog" aria-modal="true">
+  <div class="modal" onclick="event.stopPropagation()">
+    <div class="modal-header">
+      <h3 id="modal-title">Modal</h3>
+      <button class="modal-close" onclick="closeModal()" aria-label="Fechar">✕</button>
+    </div>
+    <div id="modal-body" class="modal-body"></div>
+  </div>
+</div>
+
+<!-- TOAST -->
+<div id="toast-container" class="toast-container" role="region" aria-live="polite" aria-label="Notificações"></div>
+
+<script src="app.js"></script>
+</body>
+</html>
